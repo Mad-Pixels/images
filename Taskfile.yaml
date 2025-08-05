@@ -29,8 +29,8 @@ tasks:
           --platform {{.platforms | default .default_platforms}} \
           --file {{.dockerfile | default (print .CONTEXT "/Dockerfile")}} \
           {{.BUILD_ARGS}} \
-          -t madpixels/{{.CONTEXT}}:{{.TAG}} \
-          -t madpixels/{{.CONTEXT}}:latest \
+          -t ghcr.io/mad-pixels/{{.CONTEXT}}:{{.TAG}} \
+          -t ghcr.io/mad-pixels/{{.CONTEXT}}:latest \
           --push \
           {{.context_path | default (print "./" .CONTEXT)}}
 
