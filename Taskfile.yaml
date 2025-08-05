@@ -1,0 +1,53 @@
+version: '3'
+
+vars:
+  git_root:
+    sh: git rev-parse --show-toplevel
+
+  default_platforms: linux/amd64,linux/arm64
+  image_alpine_ver: "3.20"
+
+tasks:
+  default:
+    desc: Show usage
+    cmds:
+      - echo "Please enter a task or use '-l' or '--list-all' to list all available tasks"
+    silent: true
+
+# ================================================#
+# ---------------------INTERNAL-------------------#
+# ================================================#
+
+  _docker/buildx:
+    desc: Internal task to build multiarch images.
+    internal: true
+    silent: true
+    dir: "{{.git_root}}"
+    cmds:
+      - |
+        docker buildx build \
+          --platform {{.platforms | default .default_platforms}} \
+          --file {{.dockerfile | default (print .CONTEXT "/Dockerfile")}} \
+          {{.BUILD_ARGS}} \
+          -t madpixels/{{.CONTEXT}}:{{.TAG}} \
+          -t madpixels/{{.CONTEXT}}:latest \
+          --push \
+          {{.context_path | default (print "./" .CONTEXT)}}
+
+# ================================================#
+# ---------------------PUBLIC---------------------#
+# ================================================#
+
+  actionlint:
+    desc: Build actionlint image (multiarch)
+    vars:
+      VERSION: v1.7.7
+    cmds:
+      - task: _docker/buildx
+        vars:
+          TAG: "{{.VERSION}}"
+          CONTEXT: actionlint
+          BUILD_ARGS: >-
+            --build-arg ALPINE_VERSION={{.image_alpine_ver}}
+            --build-arg ACTIONLINT_VER={{.VERSION}}
+    silent: true

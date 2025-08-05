@@ -7,15 +7,27 @@ jobs:
   push:
     name: Build and Push Docker Image
     runs-on: ubuntu-latest
+
     steps:
-      - name: Build and Push to DockerHub
-        uses: Mad-Pixels/github-workflows/dockerhub-build-push@dev3
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
         with:
-          docker_user:  ${{ secrets.DOCKERHUB_USERNAME }}
-          docker_token: ${{ secrets.DOCKERHUB_PASSWORD }}
-          
-          tag:        v1.7.7
-          
-          context_path: "actionlint"
-          repository: madpixels/actionlint
-  
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+        with:
+          install: true
+
+      - name: Invoke Taskfile
+        uses: Mad-Pixels/github-workflows/.github/actions/taskfile-runner@main
+        with:
+          command: actionlint VERSION=v1.7.7
