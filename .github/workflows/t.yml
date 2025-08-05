@@ -16,5 +16,6 @@ jobs:
           
           tag:        v1.7.7
           
+          dockerfile_path: "./actionlint"
           repository: madpixels/actionlint
   
