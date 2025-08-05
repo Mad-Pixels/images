@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Build and Push to DockerHub
-        uses: Mad-Pixels/github-workflows/.github/actions/dockerhub-build-push@main
+        uses: Mad-Pixels/github-workflows/dockerhub-build-push@dev3
         with:
           docker_user:  ${{ secrets.DOCKERHUB_USERNAME }}
           docker_token: ${{ secrets.DOCKERHUB_PASSWORD }}
