@@ -12,7 +12,7 @@ jobs:
         uses: Mad-Pixels/github-workflows/.github/actions/dockerhub-build-push@main
         with:
           docker_user:  ${{ secrets.DOCKERHUB_USERNAME }}
-          docker_token: ${{ secrets.DOCKERHUB_TOKEN }}
+          docker_token: ${{ secrets.DOCKERHUB_PASSWORD }}
           
           tag:        v1.7.7
           
