@@ -30,7 +30,7 @@ jobs:
         id: get-changes
         run: |
           if [ -n "${{ steps.changed-files.outputs.all_changed_files }}" ]; then
-            MATRIX=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | tr ' ' '\n' | cut -d/ -f2 | sort -u | jq -R . | jq -s .)
+            MATRIX=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | tr ' ' '\n' | cut -d/ -f2 | sort -u | jq -R . | jq -s -c .)
           else
             MATRIX="[]"
           fi
