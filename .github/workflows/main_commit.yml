@@ -2,23 +2,25 @@ name: Main commit
 
 on:
   push:
-    branches: 
-      - main
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
   detect-changes:
-    name: Detect changed directories 
+    name: Detect changed directories
     runs-on: ${{ vars.RUNS_ON }}
     outputs:
       dirs: ${{ steps.get-changes.outputs.changes }}
+
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Get changes 
+      - name: Get changes
         id: get-changes
-        uses: Mad-Pixels/github-workflows/.github/actions/taskfile-runner@main 
+        uses: Mad-Pixels/github-workflows/.github/actions/taskfile-runner@main
         with:
           command: changes
 
@@ -29,9 +31,9 @@ jobs:
     runs-on: ${{ vars.RUNS_ON }}
     strategy:
       matrix:
-        dir: ${{ fromJSON(needs.detect-changes.outputs.dirs) }} 
+        dir: ${{ fromJSON(needs.detect-changes.outputs.dirs) }}
 
-    steps: 
+    steps:
       - uses: ./.github/actions/build
         with:
           docker_username: ${{ github.actor }}

@@ -21,7 +21,6 @@ tasks:
 # ================================================#
 
   _docker/buildx:
-    desc: Internal task to build multiarch images.
     internal: true
     silent: true
     dir: "{{.git_root}}"
@@ -37,7 +36,6 @@ tasks:
           {{.context_path | default (print "./" .CONTEXT)}}
 
   _docker/run:
-    desc: Internal task to run secure container.
     internal: true
     silent: true
     dir: "{{.git_root}}"
@@ -57,10 +55,9 @@ tasks:
       vars: [IMAGE, CMD, MOUNT_DIR]
 
   _docker/lint:
-    desc: Execute hadolint on single Dockerfile.
     internal: true
     silent: true
-    dir: "{{.git_root}}" 
+    dir: "{{.git_root}}"
     cmds:
       - task: _docker/run
         vars:
@@ -125,29 +122,23 @@ tasks:
     cmds:
       - |
         echo "Detecting changed Docker image directories..."
-
         if [ -n "$GITHUB_BASE_REF" ]; then
           git fetch origin "$GITHUB_BASE_REF" --depth=1
-          BASE=$(git merge-base origin/"$GITHUB_BASE_REF" HEAD)
-          echo "Detected PR context. Base is origin/$GITHUB_BASE_REF ($BASE)"
+          BASE=$(git merge-base HEAD origin/"$GITHUB_BASE_REF")
+          echo "Detected PR context. Base: $BASE"
         else
-          BASE=$(git rev-parse HEAD^)
-          echo "Detected push context. Base is HEAD^ ($BASE)"
+          git fetch origin main --depth=1
+          BASE=$(git merge-base HEAD origin/main)
+          echo "Detected push context. Base: $BASE"
         fi
-
         DIRS=$(git diff --name-only "$BASE" HEAD \
-          | grep '^images/' \
+          | grep '^images/[^/]\+/' \
           | cut -d/ -f2 \
           | sort -u \
           | jq -R . | jq -s .)
 
         echo "Changed image dirs: $DIRS"
-
         if [ -n "$GITHUB_OUTPUT" ]; then
-          echo "changes<<EOF" >> "$GITHUB_OUTPUT"
-          echo "$DIRS" >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
-        else
-          echo "changes=$DIRS"
+          echo "changes=$DIRS" >> "$GITHUB_OUTPUT"
         fi
 
