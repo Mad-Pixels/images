@@ -18,16 +18,29 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get changes
-        id: get-changes
-        uses: Mad-Pixels/github-workflows/.github/actions/taskfile-runner@main
+      - name: Get changed image directories
+        id: changed-files
+        uses: tj-actions/changed-files@v44
         with:
-          command: changes
+          files: images/**
+          dir_names: true
+          dir_names_max_depth: 2
+
+      - name: Prepare matrix
+        id: get-changes
+        run: |
+          if [ -n "${{ steps.changed-files.outputs.all_changed_files }}" ]; then
+            MATRIX=$(echo "${{ steps.changed-files.outputs.all_changed_files }}" | tr ' ' '\n' | cut -d/ -f2 | sort -u | jq -R . | jq -s .)
+          else
+            MATRIX="[]"
+          fi
+          echo "changes=$MATRIX" >> "$GITHUB_OUTPUT"
+          echo "Changed directories: $MATRIX"
 
   build:
     name: Build changed images
     needs: detect-changes
-    if: ${{ needs.detect-changes.outputs.dirs != '' }}
+    if: ${{ needs.detect-changes.outputs.dirs != '[]' && needs.detect-changes.outputs.dirs != '' }}
     runs-on: ${{ vars.RUNS_ON }}
     strategy:
       matrix:

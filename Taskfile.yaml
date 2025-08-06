@@ -115,23 +115,3 @@ tasks:
         vars:
           DOCKERFILE_PATH: "{{.ITEM}}"
 
-  changes:
-    desc: Detect changed image directories
-    dir: "{{.git_root}}"
-    silent: true
-    cmds:
-      - |
-        git fetch origin main --quiet
-        BASE=$(git merge-base HEAD origin/main)
-        echo "BASE=$BASE"
-        CHANGED=$(git diff --name-only "$BASE" HEAD)
-        DIRS=$(echo "$CHANGED" \
-          | grep '^images/' \
-          | cut -d/ -f2 \
-          | sort -u \
-          | jq -R . | jq -s .)
-        echo "Changed image dirs: $DIRS"
-        if [ -n "$GITHUB_OUTPUT" ]; then
-          echo "changes=$DIRS" >> "$GITHUB_OUTPUT"
-        fi
-
