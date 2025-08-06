@@ -119,24 +119,29 @@ tasks:
           DOCKERFILE_PATH: "{{.ITEM}}"
 
   changes:
-    desc: Get changed Docker directories.
+    desc: Detect changed image directories
     dir: "{{.git_root}}"
     silent: true
     cmds:
       - |
         echo "Detecting changed Docker image directories..."
 
-        git fetch origin main --depth=1
-        BASE_SHA=$(git merge-base origin/main HEAD)
-        echo "Diffing from $BASE_SHA to HEAD"
+        if [ -n "$GITHUB_BASE_REF" ]; then
+          git fetch origin "$GITHUB_BASE_REF" --depth=1
+          BASE=$(git merge-base origin/"$GITHUB_BASE_REF" HEAD)
+          echo "Detected PR context. Base is origin/$GITHUB_BASE_REF ($BASE)"
+        else
+          BASE=$(git rev-parse HEAD^)
+          echo "Detected push context. Base is HEAD^ ($BASE)"
+        fi
 
-        DIRS=$(git diff --name-only "$BASE_SHA" HEAD \
+        DIRS=$(git diff --name-only "$BASE" HEAD \
           | grep '^images/' \
           | cut -d/ -f2 \
           | sort -u \
           | jq -R . | jq -s .)
 
-        echo "Changed directories: $DIRS"
+        echo "Changed image dirs: $DIRS"
 
         if [ -n "$GITHUB_OUTPUT" ]; then
           echo "changes<<EOF" >> "$GITHUB_OUTPUT"
