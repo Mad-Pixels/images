@@ -5,6 +5,7 @@ vars:
     sh: git rev-parse --show-toplevel
 
   default_platforms: linux/amd64,linux/arm64
+  registry: "ghcr.io/mad-pixels"
   image_alpine_ver: "3.20"
 
 tasks:
@@ -29,17 +30,48 @@ tasks:
           --platform {{.platforms | default .default_platforms}} \
           --file {{.dockerfile | default (print .CONTEXT "/Dockerfile")}} \
           {{.BUILD_ARGS}} \
-          -t ghcr.io/mad-pixels/{{.CONTEXT}}:{{.TAG}} \
-          -t ghcr.io/mad-pixels/{{.CONTEXT}}:latest \
+          -t {{.registry}}/{{.CONTEXT}}:{{.TAG}} \
+          -t {{.registry}}/{{.CONTEXT}}:latest \
           --push \
           {{.context_path | default (print "./" .CONTEXT)}}
 
+  _docker/run:
+    desc: Internal task to run secure container.
+    internal: true
+    silent: true
+    dir: "{{.git_root}}"
+    cmd: |
+      docker run --rm --init {{if .TTY}}-it{{end}} \
+        --cap-drop=ALL \
+        --security-opt no-new-privileges \
+        --user $(id -u):$(id -g) \
+        --workdir /workspace \
+        {{if .ENVS}}{{range $env := .ENVS}}--env {{$env}} {{end}}{{end}}\
+        {{if .PORTS}}{{range $port := .PORTS}}--publish {{$port}} {{end}}{{end}}\
+        --volume "{{.git_root}}/{{.MOUNT_DIR}}:/workspace:rw" \
+        {{.IMAGE}} \
+        {{.CMD}}
+    requires:
+      vars: [IMAGE, CMD, MOUNT_DIR]
+
+  _docker/lint:
+    desc: Execute hadolint on single Dockerfile.
+    internal: true
+    silent: true
+    dir: "{{.git_root}}" 
+    cmds:
+      - task: _docker/run
+        vars:
+          IMAGE: "hadolint/hadolint"
+          MOUNT_DIR: "{{.DOCKERFILE_PATH | dir}}"
+          CMD: "hadolint {{.DOCKERFILE_PATH | base}}"
+
 # ================================================#
-# ---------------------PUBLIC---------------------#
+# ---------------------IMAGES---------------------#
 # ================================================#
 
   actionlint:
-    desc: Build actionlint image (multiarch)
+    desc: Build actionlint image.
     vars:
       VERSION: v1.7.7
     cmds:
@@ -51,3 +83,33 @@ tasks:
             --build-arg ALPINE_VERSION={{.image_alpine_ver}}
             --build-arg ACTIONLINT_VER={{.VERSION}}
     silent: true
+
+  taskfile:
+    desc: Build taskfile image.
+    vars:
+      VERSION: v3.44.1
+    cmds:
+      - task: _docker/buildx
+        vars:
+          TAG: "{{.VERSION}}"
+          CONTEXT: taskfile
+          BUILD_ARGS: >-
+            --build-arg ALPINE_VERSION={{.image_alpine_ver}}
+            --build-arg TASK_VERSION={{.VERSION}}
+    silent: true
+
+# ================================================#
+# ----------------------CI/CD---------------------#
+# ================================================#
+
+  docker/lint:
+    desc: Run hadolint for all Dockerfiles in the repo.
+    dir: "{{.git_root}}"
+    vars:
+      files:
+        sh: find . -type f -name Dockerfile
+    cmds:
+      - for: { var: files }
+        task: _docker/lint
+        vars:
+          DOCKERFILE_PATH: "{{.ITEM}}"
