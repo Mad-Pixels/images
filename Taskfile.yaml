@@ -5,6 +5,7 @@ vars:
     sh: git rev-parse --show-toplevel
 
   default_platforms: linux/amd64,linux/arm64
+  base_context: images
   registry: "ghcr.io/mad-pixels"
   image_alpine_ver: "3.20"
 
@@ -48,6 +49,7 @@ tasks:
         --workdir /workspace \
         {{if .ENVS}}{{range $env := .ENVS}}--env {{$env}} {{end}}{{end}}\
         {{if .PORTS}}{{range $port := .PORTS}}--publish {{$port}} {{end}}{{end}}\
+        {{if .VOLUMES}}{{range $vol := .VOLUMES}}--volume {{$vol}} {{end}}{{end}}\
         --volume "{{.git_root}}/{{.MOUNT_DIR}}:/workspace:rw" \
         {{.IMAGE}} \
         {{.CMD}}
@@ -65,6 +67,8 @@ tasks:
           IMAGE: "hadolint/hadolint"
           MOUNT_DIR: "{{.DOCKERFILE_PATH | dir}}"
           CMD: "hadolint {{.DOCKERFILE_PATH | base}}"
+          VOLUMES:
+            - "{{.git_root}}/.hadolint.yaml:/workspace/.hadolint.yaml"
 
 # ================================================#
 # ---------------------IMAGES---------------------#
@@ -78,7 +82,7 @@ tasks:
       - task: _docker/buildx
         vars:
           TAG: "{{.VERSION}}"
-          CONTEXT: actionlint
+          CONTEXT: "{{.base_context}}/actionlint"
           BUILD_ARGS: >-
             --build-arg ALPINE_VERSION={{.image_alpine_ver}}
             --build-arg ACTIONLINT_VER={{.VERSION}}
@@ -92,7 +96,7 @@ tasks:
       - task: _docker/buildx
         vars:
           TAG: "{{.VERSION}}"
-          CONTEXT: taskfile
+          CONTEXT: "{{.base_context}}/taskfile"
           BUILD_ARGS: >-
             --build-arg ALPINE_VERSION={{.image_alpine_ver}}
             --build-arg TASK_VERSION={{.VERSION}}
@@ -122,12 +126,13 @@ tasks:
       - |
         git fetch origin main --depth=1
         DIRS=$(git diff --name-only origin/main HEAD \
-          | cut -d/ -f1 \
-          | grep -E '^(actionlink|taskfile|notify)$' \
+          | grep '^images/' \
+          | cut -d/ -f2 \
           | sort -u \
           | jq -R . | jq -s .)
+
         if [ -n "$GITHUB_OUTPUT" ]; then
-          echo "changes=$DIRS" >> $GITHUB_OUTPUT
-        else 
+          echo "changes=$DIRS" >> "$GITHUB_OUTPUT"
+        else
           echo "changes=$DIRS"
         fi

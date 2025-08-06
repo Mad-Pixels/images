@@ -4,7 +4,7 @@ ARG ALPINE_VERSION
 FROM --platform=$BUILDPLATFORM alpine:${ALPINE_VERSION} AS builder
 ARG ACTIONLINT_VER
 
-RUN apk add --no-cache go=latest git=latest
+RUN apk add --no-cache go git
 ENV GOPATH=/go \
     GOCACHE=/tmp/.cache \
     PATH=/go/bin:/usr/local/go/bin:$PATH
