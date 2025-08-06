@@ -124,8 +124,11 @@ tasks:
     silent: true
     cmds:
       - |
+        echo "Detecting changed Docker image directories..."
+
         git fetch origin main --depth=1
         BASE_SHA=$(git merge-base origin/main HEAD)
+        echo "Diffing from $BASE_SHA to HEAD"
 
         DIRS=$(git diff --name-only "$BASE_SHA" HEAD \
           | grep '^images/' \
@@ -133,8 +136,12 @@ tasks:
           | sort -u \
           | jq -R . | jq -s .)
 
+        echo "Changed directories: $DIRS"
+
         if [ -n "$GITHUB_OUTPUT" ]; then
-          echo "changes=$DIRS" >> "$GITHUB_OUTPUT"
+          echo "changes<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$DIRS" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
         else
           echo "changes=$DIRS"
         fi
