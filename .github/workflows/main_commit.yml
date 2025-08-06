@@ -1,33 +1,39 @@
-name: Push Docker Image
+name: Main commit
 
 on:
   push:
+    branches: 
+      - main
 
 jobs:
-  push:
-    name: Build and Push Docker Image
-    runs-on: ubuntu-latest
-
+  detect-changes:
+    name: Detect changed directories 
+    runs-on: ${{ vars.RUNS_ON }}
+    outputs:
+      dirs: ${{ steps.get-changes.outputs.changes }}
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
+      - uses: actions/checkout@v4
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Get changes 
+        id: get-changes
+        uses: Mad-Pixels/github-workflows/.github/actions/taskfile-runner@main 
         with:
-          install: true
+          command: changes
 
-      - name: Invoke Taskfile
-        uses: Mad-Pixels/github-workflows/.github/actions/taskfile-runner@main
+  build:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.dirs != '' }}
+    runs-on: ${{ vars.RUNS_ON }}
+    strategy:
+      matrix:
+        dir: ${{ fromJson('["' + join('","', needs.detect-changes.outputs.dirs.split(' ')) + '"]') }}
+
+    steps: 
+      - uses: ./.github/workflows/.build.yml
         with:
-          command: actionlint VERSION=v1.7.7
+          docker_username: ${{ github.actor }}
+          docker_password: ${{ secrets.GITHUB_TOKEN }}
+          image: ${{ matrix.dir }}
+

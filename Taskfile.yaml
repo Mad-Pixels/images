@@ -113,3 +113,15 @@ tasks:
         task: _docker/lint
         vars:
           DOCKERFILE_PATH: "{{.ITEM}}"
+
+  changes:
+    desc: Get changes Docker directories.
+    silent: true
+    cmds: 
+      - |
+        CHANGES=$(git diff --name-only origin/main HEAD \
+          | grep '^' \
+          | cut -d '/' -f1 \
+          | sort -u  \
+          | grep -E '^(actionlint|taskfile)' || true)
+        echo "changes=$(echo $CHANGES | xargs)" >> $GITHUB_OUTPUT
