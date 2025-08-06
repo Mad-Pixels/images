@@ -1,0 +1,39 @@
+name: Main commit
+
+on:
+  push:
+    branches: 
+      - main
+
+jobs:
+  detect-changes:
+    name: Detect changed directories 
+    runs-on: ${{ vars.RUNS_ON }}
+    outputs:
+      dirs: ${{ steps.get-changes.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get changes 
+        id: get-changes
+        uses: Mad-Pixels/github-workflows/.github/actions/taskfile-runner@main 
+        with:
+          command: changes
+
+  build:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.dirs != '' }}
+    runs-on: ${{ vars.RUNS_ON }}
+    strategy:
+      matrix:
+        dir: ${{ fromJson('["' + join('","', needs.detect-changes.outputs.dirs.split(' ')) + '"]') }}
+
+    steps: 
+      - uses: ./.github/workflows/.build.yml
+        with:
+          docker_username: ${{ github.actor }}
+          docker_password: ${{ secrets.GITHUB_TOKEN }}
+          image: ${{ matrix.dir }}
+
