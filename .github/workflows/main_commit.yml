@@ -28,7 +28,7 @@ jobs:
     runs-on: ${{ vars.RUNS_ON }}
     strategy:
       matrix:
-        dir: ${{ fromJson('["' + join('","', needs.detect-changes.outputs.dirs.split(' ')) + '"]') }}
+        dir: ${{ fromJSON(toJSON(needs.detect-changes.outputs.dirs).split(' ')) }}
 
     steps: 
       - uses: ./.github/workflows/.build.yml
