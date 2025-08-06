@@ -121,22 +121,15 @@ tasks:
     silent: true
     cmds:
       - |
-        echo "Detecting changed Docker image directories..."
-        if [ -n "$GITHUB_BASE_REF" ]; then
-          git fetch origin "$GITHUB_BASE_REF" --depth=1
-          BASE=$(git merge-base HEAD origin/"$GITHUB_BASE_REF")
-          echo "Detected PR context. Base: $BASE"
-        else
-          git fetch origin main --depth=1
-          BASE=$(git merge-base HEAD origin/main)
-          echo "Detected push context. Base: $BASE"
-        fi
-        DIRS=$(git diff --name-only "$BASE" HEAD \
-          | grep '^images/[^/]\+/' \
+        git fetch origin main --quiet
+        BASE=$(git merge-base HEAD origin/main)
+        echo "BASE=$BASE"
+        CHANGED=$(git diff --name-only "$BASE" HEAD)
+        DIRS=$(echo "$CHANGED" \
+          | grep '^images/' \
           | cut -d/ -f2 \
           | sort -u \
           | jq -R . | jq -s .)
-
         echo "Changed image dirs: $DIRS"
         if [ -n "$GITHUB_OUTPUT" ]; then
           echo "changes=$DIRS" >> "$GITHUB_OUTPUT"
