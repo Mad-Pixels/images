@@ -18,7 +18,7 @@ jobs:
       - name: Load update.yml
         id: config
         run: |
-          IMAGES=$(yq eval '.images' update.yml -o json -I0)
+          IMAGES=$(yq eval '.images' monthly_update.yml -o json -I0)
           echo "images=$IMAGES" >> $GITHUB_OUTPUT
 
   refresh:
