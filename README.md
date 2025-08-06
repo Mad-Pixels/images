@@ -14,8 +14,8 @@ Central repo for building and publishing all Mad-Pixels Docker images.
 ## Quickstart
 Pull and run any image by name:
 ```bash
-docker pull ghcr.io/mad-pixels/<image-name>:<tag> or latest
-docker run --rm -it ghcr.io/mad-pixels/<image-name>:<tag> or latest 
+docker pull ghcr.io/mad-pixels/images/<image-name>:<tag> or latest
+docker run --rm -it ghcr.io/mad-pixels/images/<image-name>:<tag> or latest 
 ```
 
 ## Adding a New Image
