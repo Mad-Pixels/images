@@ -1,0 +1,39 @@
+name: Monthly Images Refresh
+
+on:
+  schedule:
+    - cron: '0 6 1 * *'
+  workflow_dispatch:
+
+jobs:
+  load-config:
+    name: Load config
+    runs-on: ${{ vars.RUNS_ON }}
+    outputs:
+      images: ${{ steps.config.outputs.images }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Load update.yml
+        id: config
+        run: |
+          IMAGES=$(yq eval '.images' update.yml -o json -I0)
+          echo "images=$IMAGES" >> $GITHUB_OUTPUT
+
+  refresh:
+    name: Refresh Images
+    needs: load-config
+    runs-on: ${{ vars.RUNS_ON }}
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ${{ fromJSON(needs.load-config.outputs.images) }}
+    
+    steps:
+      - uses: ./.github/actions/build
+        with:
+          docker_username: ${{ github.actor }}
+          docker_password: ${{ secrets.GITHUB_TOKEN }}
+          image: ${{ matrix.image }}

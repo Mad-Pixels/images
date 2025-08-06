@@ -74,7 +74,7 @@ tasks:
   actionlint:
     desc: Build actionlint image.
     vars:
-      VERSION: v1.7.7
+      VERSION: $(curl -s "https://api.github.com/repos/rhysd/actionlint/releases/latest" | jq -r .tag_name)
     cmds:
       - task: _docker/buildx
         vars:
@@ -88,7 +88,7 @@ tasks:
   taskfile:
     desc: Build taskfile image.
     vars:
-      VERSION: v3.44.1
+      VERSION: $(curl -s "https://api.github.com/repos/go-task/task/releases/latest" | jq -r .tag_name)
     cmds:
       - task: _docker/buildx
         vars:
