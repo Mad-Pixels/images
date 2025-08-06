@@ -23,12 +23,13 @@ jobs:
           command: changes
 
   build:
+    name: Build changed images
     needs: detect-changes
     if: ${{ needs.detect-changes.outputs.dirs != '' }}
     runs-on: ${{ vars.RUNS_ON }}
     strategy:
       matrix:
-        dir: ${{ fromJSON(toJSON(needs.detect-changes.outputs.dirs).split(' ')) }}
+        dir: ${{ fromJSON(needs.detect-changes.outputs.dirs) }} 
 
     steps: 
       - uses: ./.github/actions/build
