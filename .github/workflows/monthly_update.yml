@@ -32,6 +32,8 @@ jobs:
         image: ${{ fromJSON(needs.load-config.outputs.images) }}
     
     steps:
+      - uses: actions/checkout@v4
+
       - uses: ./.github/actions/build
         with:
           docker_username: ${{ github.actor }}
