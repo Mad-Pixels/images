@@ -31,7 +31,7 @@ jobs:
         dir: ${{ fromJSON(toJSON(needs.detect-changes.outputs.dirs).split(' ')) }}
 
     steps: 
-      - uses: ./.github/workflows/.build.yml
+      - uses: ./.github/actions/build
         with:
           docker_username: ${{ github.actor }}
           docker_password: ${{ secrets.GITHUB_TOKEN }}
