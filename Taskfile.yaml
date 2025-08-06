@@ -116,12 +116,18 @@ tasks:
 
   changes:
     desc: Get changes Docker directories.
+    dir: "{{.git_root}}"
     silent: true
     cmds: 
       - |
-        CHANGES=$(git diff --name-only origin/main HEAD \
-          | grep '^' \
-          | cut -d '/' -f1 \
-          | sort -u  \
-          | grep -E '^(actionlint|taskfile)' || true)
-        echo "changes=$(echo $CHANGES | xargs)" >> $GITHUB_OUTPUT
+        git fetch origin main --depth=1
+        DIRS=$(git diff --name-only origin/main HEAD \
+          | cut -d/ -f1 \
+          | grep -E '^(actionlink|taskfile|notify)$' \
+          | sort -u \
+          | jq -R . | jq -s .)
+        if [ -n "$GITHUB_OUTPUT" ]; then
+          echo "changes=$DIRS" >> $GITHUB_OUTPUT
+        else 
+          echo "changes=$DIRS"
+        fi
