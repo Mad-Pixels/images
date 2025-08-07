@@ -11,6 +11,6 @@ ENV GOPATH=/go \
 RUN go install github.com/rhysd/actionlint/cmd/actionlint@${ACTIONLINT_VER}
 
 # final image ->
-FROM --platform=$TARGETPLATFORM scratch
+FROM --platform=$TARGETPLATFORM alpine:${ALPINE_VERSION}
 COPY --from=builder /go/bin/actionlint /actionlint
 ENTRYPOINT ["/actionlint"]
