@@ -37,7 +37,7 @@ runs:
         install: true
 
     - name: Invoke Taskfile 
-      uses: Mad-Pixels/github-workflows/.github/actions/taskfile-runner@main
+      uses: Mad-Pixels/github-workflows/actions/taskfile-runner@dev3
       with:
         command: ${{ inputs.image }}
 
